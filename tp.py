@@ -1,6 +1,7 @@
 
 from random import *
 from numpy import *
+import time
 
 """
 TP°1 Alg. Geneticos
@@ -16,10 +17,15 @@ Teniendo en cuenta los siguientes parametros:
     Método de Mutación: invertida
 """
 
-"Se inicializa la poblacion como una matriz o una lista anidada con valores aleatorios de cada gen en cada cromosoma"
-def inicializar_poblacion(cant_cromosomas, cant_genes):
+PROB_CROSSOVER = 0.75
+PROB_MUTACION = 0.05
+
+tiempos_ejecucion = []
+
+#"Se inicializa la poblacion como una matriz o una lista anidada con valores aleatorios de cada gen en cada cromosoma"
+def init_poblacion(cant_cromosomas, cant_genes):
     poblacion = []
-    
+
     for i in range(cant_cromosomas):
         cromo = []
         
@@ -31,7 +37,7 @@ def inicializar_poblacion(cant_cromosomas, cant_genes):
     
     return poblacion
 
-"Funcion que convierte una lista binaria y devuelve el resultado en decimal"
+#"Funcion que convierte una lista binaria y devuelve el resultado en decimal"
 def binatodeci(binary):    
     resultado = 0
 
@@ -40,30 +46,70 @@ def binatodeci(binary):
 
     return resultado
 
-"Devuelve el valor de la funcion de x => f(x) = (x/coef)^2"
+#"Devuelve el valor de la funcion de x => f(x) = (x/coef)^2"
 def funcion_objetivo(x):
     coef = (2**30)-1;
     return (x/coef)**2
     
-"Devuelve el fitness en funcion del cromosoma"
+#"Devuelve el fitness en funcion del cromosoma"
 def funcion_fitness(cromosoma):
     x = binatodeci(cromosoma)
     return funcion_objetivo(x)
+
+#"Funcion de seleccion: ruleta. Devuelve un cromosoma"
+def ruleta(poblacion):
+    cromo = []
+    
+    # "TODO: Se selecciona el cromosoma de la poblacion usando el metodo de la ruleta"
+    
+    return cromo;
+
+# Funcion mutacion
+def mutacion(cromosoma):
+    
+    return 0
+
+# Funcion crossover
+def crossover(cromo_p, cromo_m):
+    
+    return 0
+
+# Funcion recursiva. Aca se ejecutan los ciclos del programa y se aplicaran el crossover, el metodo de seleccion y la mutacion.
+def ciclo(poblacion, ciclos):  
+    start_time = time.perf_counter() # "Se obtiene el tiempo de ejecucion actual"
+    
+    fitness = []
+
+    for cromosoma in poblacion:
+        fitness.append(funcion_fitness(cromosoma)) #"Se calcula el fitness de cada cromosoma y se agrega a la lista de fitness"
+    
+    print("")
+    print(fitness)
+    print(max(fitness))     #"Devuelve el maximo de la poblacion"
+    print(min(fitness))     #"Devuelve el minimo de la poblacion"
+    print(mean(fitness))    #"Devuelve el promedio de la poblacion"
+    print(std(fitness))     #"Devuelve el el desvio estandar de la poblacion"
+    
+    #"TODO: Aca se hace el metodo de seleccion el crossover y la mutacion"
+    
+    end_time = time.perf_counter()  # "Se obtiene el tiempo de ejecucion cuando finaliza un ciclo"
+
+    tiempos_ejecucion.append(end_time - start_time)
+    
+    if ciclos <= 1:
+        # "Finaliza todos los ciclos y muestra las estadisticas, graficos, etc"
+        print("Tiempo Promedio de Ejecucion: ", mean(tiempos_ejecucion))
+    else:
+        ciclo(poblacion, ciclos-1)
     
 
-"Poblacion Inicial"
-poblacion = inicializar_poblacion(10, 30);
+poblacion = init_poblacion(10, 30)  #"Se inicializaa la poblacion Inicial"
 
-fitness = []
+nro_ciclos = int(input("Seleccione la cantidad de ciclos: "))
 
-for cromosoma in poblacion:
-    fitness.append(funcion_fitness(cromosoma))
+ciclo(poblacion, nro_ciclos) #"Se ejecuta el ciclo del programa de forma recursiva"
 
-print(fitness)
-print(max(fitness)) ;"Devuelve el maximo de la poblacion"
-print(min(fitness)) ;"Devuelve el minimo de la poblacion"
-print(mean(fitness)) ;"Devuelve el promedio de la poblacion"
-print(std(fitness)) ;"Devuelve el el desvio estandar de la poblacion"
+time.sleep(1)
 
 input("Press to exit...")
 
