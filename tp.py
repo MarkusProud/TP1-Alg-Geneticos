@@ -56,13 +56,26 @@ def funcion_fitness(cromosoma):
     x = binatodeci(cromosoma)
     return funcion_objetivo(x)
 
-#"Funcion de seleccion: ruleta. Devuelve un cromosoma"
-def ruleta(poblacion, fitness):
-    cromo = []
+#"Funcion de seleccion: ruleta. Devuelve un nuevo cromosoma"
+def ruleta(poblacion):    
+    #"Se calcula el fitness de cada cromosoma y se agrega a la lista de fitness"
+    fitness = []
+    for cromosoma in poblacion:
+        fitness.append(funcion_fitness(cromosoma))
     
-    # "TODO: Se selecciona el cromosoma de la poblacion usando el metodo de la ruleta"
+    sum_fitness = sum(fitness)
     
-    return cromo;
+    # Este es el giro random de la ruleta del rango del fitness
+    r = uniform(0, sum_fitness)
+ 
+    acumulado = 0
+
+    # Se busca en que posicion cayo r iterando y acumulando cada probabilidad 
+    for i in range(len(poblacion)):
+        acumulado += fitness[i]
+
+        if r <= acumulado:
+            return poblacion[i].copy()
 
 # Funcion mutacion: La mutacion es una probabilidad que puede ocurrir en algun gen cualquiera del cromosoma
 def mutacion(cromosoma):
@@ -70,7 +83,7 @@ def mutacion(cromosoma):
 
     gen_pos = random(0, len(cromosoma)-1) #Se selecciona un gen aleatorio del cromosoma
     
-    if random() < 0.05:
+    if random() < PROB_MUTACION:
             nuevo_cromosoma[gen_pos] = 1 - nuevo_cromosoma[gen_pos] #Se invierte el gen.
 
     return nuevo_cromosoma
@@ -83,18 +96,6 @@ def crossover(cromo_p, cromo_m):
 # Funcion recursiva. Aca se ejecutan los ciclos del programa y se aplicaran el crossover, el metodo de seleccion y la mutacion.
 def ciclo(poblacion, ciclos):  
     start_time = time.perf_counter() # "Se obtiene el tiempo de ejecucion actual"
-    
-    fitness = []
-
-    for cromosoma in poblacion:
-        fitness.append(funcion_fitness(cromosoma)) #"Se calcula el fitness de cada cromosoma y se agrega a la lista de fitness"
-    
-    print("")
-    print(fitness)
-    print(max(fitness))     #"Devuelve el maximo de la poblacion"
-    print(min(fitness))     #"Devuelve el minimo de la poblacion"
-    print(mean(fitness))    #"Devuelve el promedio de la poblacion"
-    print(std(fitness))     #"Devuelve el el desvio estandar de la poblacion"
     
     #"TODO: Aca se hace el metodo de seleccion el crossover y la mutacion"
     
