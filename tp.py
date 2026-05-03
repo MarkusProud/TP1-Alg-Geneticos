@@ -64,13 +64,14 @@ def ruleta(poblacion, fitness):
     
     return cromo;
 
-# Funcion mutacion
+# Funcion mutacion: La mutacion es una probabilidad que puede ocurrir en algun gen cualquiera del cromosoma
 def mutacion(cromosoma):
     nuevo_cromosoma = cromosoma.copy()
 
-    for i in range(len(nuevo_cromosoma)):
-        if random() < 0.05:
-            nuevo_cromosoma[i] = 1 - nuevo_cromosoma[i]
+    gen_pos = random(0, len(cromosoma)-1) #Se selecciona un gen aleatorio del cromosoma
+    
+    if random() < 0.05:
+            nuevo_cromosoma[gen_pos] = 1 - nuevo_cromosoma[gen_pos] #Se invierte el gen.
 
     return nuevo_cromosoma
 
