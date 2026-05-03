@@ -57,7 +57,7 @@ def funcion_fitness(cromosoma):
     return funcion_objetivo(x)
 
 #"Funcion de seleccion: ruleta. Devuelve un cromosoma"
-def ruleta(poblacion):
+def ruleta(poblacion, fitness):
     cromo = []
     
     # "TODO: Se selecciona el cromosoma de la poblacion usando el metodo de la ruleta"
@@ -66,8 +66,13 @@ def ruleta(poblacion):
 
 # Funcion mutacion
 def mutacion(cromosoma):
-    
-    return 0
+    nuevo_cromosoma = cromosoma.copy()
+
+    for i in range(len(nuevo_cromosoma)):
+        if random() < 0.05:
+            nuevo_cromosoma[i] = 1 - nuevo_cromosoma[i]
+
+    return nuevo_cromosoma
 
 # Funcion crossover
 def crossover(cromo_p, cromo_m):
