@@ -79,25 +79,32 @@ def ruleta(poblacion):
 
 # Funcion mutacion: La mutacion es una probabilidad que puede ocurrir en algun gen cualquiera del cromosoma
 def mutacion(cromosoma):
-    nuevo_cromosoma = cromosoma.copy()
-
-    gen_pos = random(0, len(cromosoma)-1) #Se selecciona un gen aleatorio del cromosoma
-    
     if random() < PROB_MUTACION:
-            nuevo_cromosoma[gen_pos] = 1 - nuevo_cromosoma[gen_pos] #Se invierte el gen.
+            gen_pos = randint(0, len(cromosoma)-1)
+            cromosoma[gen_pos] = 1 - cromosoma[gen_pos] #Se invierte el gen.
 
-    return nuevo_cromosoma
+    return cromosoma
 
 # Funcion crossover
 def crossover(cromo_p, cromo_m):
     
     return 0
 
+def aplicar_operadores(poblacion):
+
+    for _ in range(len(poblacion)):
+        cromosoma_p = ruleta(poblacion)
+        cromosoma_m = ruleta(poblacion)
+        cromosoma_hijo = crossover(cromosoma_p, cromosoma_m)
+        mutacion(cromosoma_hijo)
+        
+    return poblacion
+
 # Funcion recursiva. Aca se ejecutan los ciclos del programa y se aplicaran el crossover, el metodo de seleccion y la mutacion.
 def ciclo(poblacion, ciclos):  
     start_time = time.perf_counter() # "Se obtiene el tiempo de ejecucion actual"
     
-    #"TODO: Aca se hace el metodo de seleccion el crossover y la mutacion"
+    aplicar_operadores(poblacion)
     
     end_time = time.perf_counter()  # "Se obtiene el tiempo de ejecucion cuando finaliza un ciclo"
 
