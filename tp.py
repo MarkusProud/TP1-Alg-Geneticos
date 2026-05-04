@@ -22,10 +22,6 @@ CANT_GENES = 30
 PROB_CROSSOVER = 0.75
 PROB_MUTACION = 0.05
 
-
-
-tiempos_ejecucion = []
-
 #"Se inicializa la poblacion como una matriz o una lista anidada con valores aleatorios de cada gen en cada cromosoma"
 def init_poblacion(cant_cromosomas, cant_genes):
     poblacion = []
@@ -119,45 +115,62 @@ def calcular_stats(poblacion):
     for cromosoma in poblacion:
         fitness.append(funcion_fitness(cromosoma))
 
-    print("Fitness MAX : ", max(fitness))
-    print("Fitness MIN : ", min(fitness)) 
-    print("Fitness PROMEDIO : ", numpy.mean(fitness)) 
-    print("Fitness DESVIO ESTANDAR : ", numpy.std(fitness))
-    print("------------------------------------------------")
-    
-# Funcion recursiva. Aca se ejecutan los ciclos del programa y se aplicaran el crossover, el metodo de seleccion y la mutacion.
-def ciclo(poblacion, ciclos):  
-    start_time = time.perf_counter() # "Se obtiene el tiempo de ejecucion actual"
-    
-    poblacion = aplicar_operadores(poblacion) #Se aplican los operadores geneticos sobre la poblacion
-    
-    print("Generacion:", nro_ciclos - ciclos)
-    calcular_stats(poblacion) # Se calculan y se muestran las stats
-    
-    end_time = time.perf_counter()  # "Se obtiene el tiempo de ejecucion cuando finaliza un ciclo"
+    #Se calculan las stats en forma de un diccionario
+    return {
+    "min": min(fitness),
+    "max": max(fitness),
+    "promedio": numpy.mean(fitness),
+    "desvio": numpy.std(fitness)
+    }
 
-    tiempos_ejecucion.append(end_time - start_time)
+def informe(historial):
+    return 0
+
+#Esta funcion devolvera un diccionario o historial de stats
+def ejecutar_ciclos(nro_ciclos):
+    if nro_ciclos <= 0: #Validacion
+        return 0
     
-    if ciclos <= 1:
-        # "Finaliza todos los ciclos y muestra las estadisticas, graficos, etc"
-        print("")
-    else:
-        ciclo(poblacion, ciclos-1)
+    historial = [] # Historial de que contiene las stats de cada generacion: nro_gen, minimo, maximo, promedio, desvio, tiempo ejecucion
+    
+    start_time = time.perf_counter() # "Se obtiene el tiempo de ejecucion inicial"
+    poblacion = init_poblacion(CANT_POBLACION, CANT_GENES)  #"Se inicializa la poblacion Inicial"
+    stats = calcular_stats(poblacion)   
+    end_time = time.perf_counter()
+    
+    historial.append({
+        "generacion": 0,
+        "min": stats["min"],
+        "promedio": stats["promedio"],
+        "max": stats["max"],
+        "desvio": stats["desvio"],
+        "tiempo": end_time - start_time         
+    })
+    
+    #Aca empieza la generacion pos inicializada la primera.
+    for generacion in range(nro_ciclos-1):           
+        start_time = time.perf_counter() # "Se obtiene el tiempo de ejecucion actual"
+        poblacion = aplicar_operadores(poblacion) #Para la siguiente poblacion 
+        stats = calcular_stats(poblacion)   
+        end_time = time.perf_counter()
+     
+        #Se guarda los stats de esta generacion en el historial
+        historial.append({
+            "generacion": generacion,
+            "min": stats["min"],
+            "promedio": stats["promedio"],
+            "max": stats["max"],
+            "desvio": stats["desvio"],
+            "tiempo": end_time - start_time             
+        })
+       
+    return historial
     
 
 nro_ciclos = int(input("Seleccione la cantidad de ciclos: "))
-
-poblacion = init_poblacion(CANT_POBLACION, CANT_GENES)  #"Se inicializaa la poblacion Inicial"
-calcular_stats(poblacion) #Para calcular las stats de la poblacion inicial
-
-ciclo(poblacion, nro_ciclos-1) #"Se ejecuta el ciclo del programa de forma recursiva"
-
-print("Tiempo Promedio de Ejecucion: ", numpy.mean(tiempos_ejecucion))
-print("Tiempo Total de Ejecucion: ", numpy.sum(tiempos_ejecucion))
-time.sleep(1)
-
+historial = ejecutar_ciclos(nro_ciclos)
+informe(historial)
 input("Press to exit...")
-
 
 
 
