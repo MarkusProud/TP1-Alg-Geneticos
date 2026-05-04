@@ -2,7 +2,7 @@
 import random
 import numpy
 import time
-
+import matplotlib.pyplot as plt
 """
 TP°1 Alg. Geneticos
 OBJETIVO: 
@@ -123,24 +123,56 @@ def calcular_stats(poblacion):
     "desvio": numpy.std(fitness)
     }
 
+def graficar_ciclo(historial):
+    fig, ax = plt.subplots()
+    
+    ax.set_title(str(len(historial)) + " Iteraciones")
+    
+    categories = ["Maximo", "Minimo", "Promedio"]
+    
+    valores = [
+        historial[-1]["max"],
+        historial[-1]["min"],
+        historial[-1]["promedio"]
+    ]
+    
+    
+    bars = ax.bar(categories, valores)
+    ax.bar_label(bars)
+    ax.set_ylabel("Fitness")
+    ax.set_ylim(0, 1)
+    fig.show()
+        
+
 def imprimir_historial(historial):
     print("\n")
     print("HISTORIAL:")
     print("Gen | Min | Max | Promedio | Desvio | Tiempo(mseg)")
     print("------------------------------------------------")
+    tiempo_total = 0
     for fila in historial:
+        tiempo = fila["tiempo"]*1000
+        tiempo_total += tiempo 
+        
         print(
             fila["generacion"],"\t",
             round(fila["min"], 3),"\t",
             round(fila["max"], 3),"\t",
             round(fila["promedio"], 3),"\t",
             round(fila["desvio"], 3),"\t",
-            round(fila["tiempo"]*1000, 3)
+            round(tiempo, 3)
         )
     print("\n")
+    print("RESUMEN")
+    print("Tiempo Total: ", round(tiempo_total, 3),"(mseg)", "Tiempo Promedio: ", round(tiempo_total / len(historial), 3),"(mseg)")
+    print("\nGraficar Ciclo? \n 1 - Si \n 2 - No\n")
+    ingreso = int(input("Seleccione una opcion"))
+    if ingreso == 1:
+        graficar_ciclo(historial)
 
 #Esta funcion devolvera un diccionario o historial de stats
 def ejecutar_ciclos(nro_ciclos):
+    
     if nro_ciclos <= 0: #Validacion
         return 0
     
