@@ -85,18 +85,29 @@ def mutacion(cromosoma):
 
     return cromosoma
 
-# Funcion crossover
+# Funcion crossover de 1-punto, devuelve dos hijos
 def crossover(cromo_p, cromo_m):
-    
-    return 0
+    if random() >= PROB_CROSSOVER:      
+        mitad = len(cromo_m)/2
+        psec_a = cromo_p[:mitad]
+        psec_b = cromo_p[mitad:]
+        csec_a = cromo_m[:mitad]
+        csec_b = cromo_m[mitad:]
+                                 # Padre = [xxxxxx] Madre = [oooooo]
+        hijo_p = psec_a + csec_b # 1er hijo del crossover [xxxooo]
+        hijo_m = csec_a + psec_b # 2do hijo del crossover [oooxxx]
+        return [hijo_p, hijo_m]
+    else:
+        return [cromo_p.copy(), cromo_m.copy()] # Si no ocurre el crossover entonces se devuelven los mismos cromosomas
 
 def aplicar_operadores(poblacion):
 
-    for _ in range(len(poblacion)):
+    for _ in range(len(poblacion)/2):
         cromosoma_p = ruleta(poblacion)
         cromosoma_m = ruleta(poblacion)
-        cromosoma_hijo = crossover(cromosoma_p, cromosoma_m)
-        mutacion(cromosoma_hijo)
+        cromosoma_hijos = crossover(cromosoma_p, cromosoma_m) #Devuelve una lista de dos cromosomas
+        mutacion(cromosoma_hijos[0])
+        mutacion(cromosoma_hijos[1])
         
     return poblacion
 
