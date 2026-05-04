@@ -123,8 +123,21 @@ def calcular_stats(poblacion):
     "desvio": numpy.std(fitness)
     }
 
-def informe(historial):
-    return 0
+def imprimir_historial(historial):
+    print("\n")
+    print("HISTORIAL:")
+    print("Gen | Min | Max | Promedio | Desvio | Tiempo(mseg)")
+    print("------------------------------------------------")
+    for fila in historial:
+        print(
+            fila["generacion"],"\t",
+            round(fila["min"], 3),"\t",
+            round(fila["max"], 3),"\t",
+            round(fila["promedio"], 3),"\t",
+            round(fila["desvio"], 3),"\t",
+            round(fila["tiempo"]*1000, 3)
+        )
+    print("\n")
 
 #Esta funcion devolvera un diccionario o historial de stats
 def ejecutar_ciclos(nro_ciclos):
@@ -139,7 +152,7 @@ def ejecutar_ciclos(nro_ciclos):
     end_time = time.perf_counter()
     
     historial.append({
-        "generacion": 0,
+        "generacion": 1,
         "min": stats["min"],
         "promedio": stats["promedio"],
         "max": stats["max"],
@@ -156,7 +169,7 @@ def ejecutar_ciclos(nro_ciclos):
      
         #Se guarda los stats de esta generacion en el historial
         historial.append({
-            "generacion": generacion,
+            "generacion": generacion+2,
             "min": stats["min"],
             "promedio": stats["promedio"],
             "max": stats["max"],
@@ -169,7 +182,7 @@ def ejecutar_ciclos(nro_ciclos):
 
 nro_ciclos = int(input("Seleccione la cantidad de ciclos: "))
 historial = ejecutar_ciclos(nro_ciclos)
-informe(historial)
+imprimir_historial(historial)
 input("Press to exit...")
 
 
