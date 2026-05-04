@@ -17,8 +17,12 @@ Teniendo en cuenta los siguientes parametros:
     Método de Mutación: invertida
 """
 
+CANT_POBLACION = 10
+CANT_GENES = 30
 PROB_CROSSOVER = 0.75
 PROB_MUTACION = 0.05
+
+
 
 tiempos_ejecucion = []
 
@@ -125,7 +129,9 @@ def calcular_stats(poblacion):
 def ciclo(poblacion, ciclos):  
     start_time = time.perf_counter() # "Se obtiene el tiempo de ejecucion actual"
     
-    aplicar_operadores(poblacion) #Se aplican los operadores geneticos sobre la poblacion
+    poblacion = aplicar_operadores(poblacion) #Se aplican los operadores geneticos sobre la poblacion
+    
+    print("Generacion:", nro_ciclos - ciclos)
     calcular_stats(poblacion) # Se calculan y se muestran las stats
     
     end_time = time.perf_counter()  # "Se obtiene el tiempo de ejecucion cuando finaliza un ciclo"
@@ -134,18 +140,20 @@ def ciclo(poblacion, ciclos):
     
     if ciclos <= 1:
         # "Finaliza todos los ciclos y muestra las estadisticas, graficos, etc"
-        print("Tiempo Promedio de Ejecucion: ", numpy.mean(tiempos_ejecucion))
+        print("")
     else:
         ciclo(poblacion, ciclos-1)
     
 
 nro_ciclos = int(input("Seleccione la cantidad de ciclos: "))
 
-poblacion = init_poblacion(10, 30)  #"Se inicializaa la poblacion Inicial"
+poblacion = init_poblacion(CANT_POBLACION, CANT_GENES)  #"Se inicializaa la poblacion Inicial"
 calcular_stats(poblacion) #Para calcular las stats de la poblacion inicial
 
-ciclo(poblacion, nro_ciclos) #"Se ejecuta el ciclo del programa de forma recursiva"
+ciclo(poblacion, nro_ciclos-1) #"Se ejecuta el ciclo del programa de forma recursiva"
 
+print("Tiempo Promedio de Ejecucion: ", numpy.mean(tiempos_ejecucion))
+print("Tiempo Total de Ejecucion: ", numpy.sum(tiempos_ejecucion))
 time.sleep(1)
 
 input("Press to exit...")
