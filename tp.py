@@ -87,30 +87,40 @@ def mutacion(cromosoma):
 
 # Funcion crossover de 1-punto, devuelve dos hijos
 def crossover(cromo_p, cromo_m):
-    if random() >= PROB_CROSSOVER:      
-        mitad = len(cromo_m)/2
-        psec_a = cromo_p[:mitad]
-        psec_b = cromo_p[mitad:]
-        csec_a = cromo_m[:mitad]
-        csec_b = cromo_m[mitad:]
-                                 # Padre = [xxxxxx] Madre = [oooooo]
-        hijo_p = psec_a + csec_b # 1er hijo del crossover [xxxooo]
-        hijo_m = csec_a + psec_b # 2do hijo del crossover [oooxxx]
-        return [hijo_p, hijo_m]
+    if random() <= PROB_CROSSOVER:      
+        punto = randint(1, len(cromo_m)-1) # Se corta en un punto aleatorio entre 1 y 29
+        hijo1 = cromo_p[:punto] + cromo_m[punto:]
+        hijo2 = cromo_m[:punto] + cromo_p[punto:]
+        return [hijo1, hijo2]
     else:
         return [cromo_p.copy(), cromo_m.copy()] # Si no ocurre el crossover entonces se devuelven los mismos cromosomas
 
 def aplicar_operadores(poblacion):
-
+    nueva_poblacion = []
+    
     for _ in range(len(poblacion)/2):
         cromosoma_p = ruleta(poblacion)
         cromosoma_m = ruleta(poblacion)
         cromosoma_hijos = crossover(cromosoma_p, cromosoma_m) #Devuelve una lista de dos cromosomas
         mutacion(cromosoma_hijos[0])
         mutacion(cromosoma_hijos[1])
+        nueva_poblacion.append(cromosoma_hijos)
         
-    return poblacion
+    return nueva_poblacion
 
+def calcular_stats(poblacion):
+    fitness = []
+
+    for cromosoma in poblacion:
+        fitness.append(funcion_fitness(cromosoma))
+
+    print(max(fitness)) ;"Devuelve el maximo de la poblacion"
+    print(min(fitness)) ;"Devuelve el minimo de la poblacion"
+    print(mean(fitness)) ;"Devuelve el promedio de la poblacion"
+    print(std(fitness)) ;"Devuelve el el desvio estandar de la poblacion"
+    
+        
+    
 # Funcion recursiva. Aca se ejecutan los ciclos del programa y se aplicaran el crossover, el metodo de seleccion y la mutacion.
 def ciclo(poblacion, ciclos):  
     start_time = time.perf_counter() # "Se obtiene el tiempo de ejecucion actual"
