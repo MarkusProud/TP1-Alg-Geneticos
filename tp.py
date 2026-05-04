@@ -1,6 +1,6 @@
 
-from random import *
-from numpy import *
+import random
+import numpy
 import time
 
 """
@@ -26,11 +26,11 @@ tiempos_ejecucion = []
 def init_poblacion(cant_cromosomas, cant_genes):
     poblacion = []
 
-    for i in range(cant_cromosomas):
+    for _ in range(cant_cromosomas):
         cromo = []
         
-        for j in range(cant_genes):
-            gen = randint(0, 1);
+        for _ in range(cant_genes):
+            gen = random.randint(0, 1);
             cromo.append(gen);
             
         poblacion.append(cromo)
@@ -66,7 +66,7 @@ def ruleta(poblacion):
     sum_fitness = sum(fitness)
     
     # Este es el giro random de la ruleta del rango del fitness
-    r = uniform(0, sum_fitness)
+    r = random.uniform(0, sum_fitness)
  
     acumulado = 0
 
@@ -79,32 +79,33 @@ def ruleta(poblacion):
 
 # Funcion mutacion: La mutacion es una probabilidad que puede ocurrir en algun gen cualquiera del cromosoma
 def mutacion(cromosoma):
-    if random() < PROB_MUTACION:
-            gen_pos = randint(0, len(cromosoma)-1)
+    if random.random() < PROB_MUTACION:
+            gen_pos = random.randint(0, len(cromosoma)-1)
             cromosoma[gen_pos] = 1 - cromosoma[gen_pos] #Se invierte el gen.
 
     return cromosoma
 
 # Funcion crossover de 1-punto, devuelve dos hijos
-def crossover(cromo_p, cromo_m):
-    if random() <= PROB_CROSSOVER:      
-        punto = randint(1, len(cromo_m)-1) # Se corta en un punto aleatorio entre 1 y 29
-        hijo1 = cromo_p[:punto] + cromo_m[punto:]
-        hijo2 = cromo_m[:punto] + cromo_p[punto:]
+def crossover(p1, p2):
+    if random.random() <= PROB_CROSSOVER:      
+        punto = random.randint(1, len(p1)-1) # Se corta en un punto aleatorio entre 1 y 29
+        hijo1 = p1[:punto] + p2[punto:]
+        hijo2 = p2[:punto] + p1[punto:]
         return [hijo1, hijo2]
     else:
-        return [cromo_p.copy(), cromo_m.copy()] # Si no ocurre el crossover entonces se devuelven los mismos cromosomas
+        return [p1.copy(), p2.copy()] # Si no ocurre el crossover entonces se devuelven los mismos cromosomas
 
 def aplicar_operadores(poblacion):
     nueva_poblacion = []
     
-    for _ in range(len(poblacion)/2):
-        cromosoma_p = ruleta(poblacion)
-        cromosoma_m = ruleta(poblacion)
-        cromosoma_hijos = crossover(cromosoma_p, cromosoma_m) #Devuelve una lista de dos cromosomas
-        mutacion(cromosoma_hijos[0])
-        mutacion(cromosoma_hijos[1])
-        nueva_poblacion.append(cromosoma_hijos)
+    for _ in range(len(poblacion)//2):
+        padre1 = ruleta(poblacion)
+        padre2 = ruleta(poblacion)
+        hijos = crossover(padre1, padre2) #Devuelve una lista de dos hijos 
+        hijo1 = mutacion(hijos[0])
+        hijo2 = mutacion(hijos[1])
+        nueva_poblacion.append(hijo1)
+        nueva_poblacion.append(hijo2)
         
     return nueva_poblacion
 
@@ -114,18 +115,18 @@ def calcular_stats(poblacion):
     for cromosoma in poblacion:
         fitness.append(funcion_fitness(cromosoma))
 
-    print(max(fitness)) ;"Devuelve el maximo de la poblacion"
-    print(min(fitness)) ;"Devuelve el minimo de la poblacion"
-    print(mean(fitness)) ;"Devuelve el promedio de la poblacion"
-    print(std(fitness)) ;"Devuelve el el desvio estandar de la poblacion"
-    
-        
+    print("Fitness MAX : ", max(fitness))
+    print("Fitness MIN : ", min(fitness)) 
+    print("Fitness PROMEDIO : ", numpy.mean(fitness)) 
+    print("Fitness DESVIO ESTANDAR : ", numpy.std(fitness))
+    print("------------------------------------------------")
     
 # Funcion recursiva. Aca se ejecutan los ciclos del programa y se aplicaran el crossover, el metodo de seleccion y la mutacion.
 def ciclo(poblacion, ciclos):  
     start_time = time.perf_counter() # "Se obtiene el tiempo de ejecucion actual"
     
-    aplicar_operadores(poblacion)
+    aplicar_operadores(poblacion) #Se aplican los operadores geneticos sobre la poblacion
+    calcular_stats(poblacion) # Se calculan y se muestran las stats
     
     end_time = time.perf_counter()  # "Se obtiene el tiempo de ejecucion cuando finaliza un ciclo"
 
@@ -133,14 +134,15 @@ def ciclo(poblacion, ciclos):
     
     if ciclos <= 1:
         # "Finaliza todos los ciclos y muestra las estadisticas, graficos, etc"
-        print("Tiempo Promedio de Ejecucion: ", mean(tiempos_ejecucion))
+        print("Tiempo Promedio de Ejecucion: ", numpy.mean(tiempos_ejecucion))
     else:
         ciclo(poblacion, ciclos-1)
     
 
-poblacion = init_poblacion(10, 30)  #"Se inicializaa la poblacion Inicial"
-
 nro_ciclos = int(input("Seleccione la cantidad de ciclos: "))
+
+poblacion = init_poblacion(10, 30)  #"Se inicializaa la poblacion Inicial"
+calcular_stats(poblacion) #Para calcular las stats de la poblacion inicial
 
 ciclo(poblacion, nro_ciclos) #"Se ejecuta el ciclo del programa de forma recursiva"
 
