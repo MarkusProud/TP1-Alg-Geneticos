@@ -86,14 +86,14 @@ def mutacion(cromosoma):
     return cromosoma
 
 # Funcion crossover de 1-punto, devuelve dos hijos
-def crossover(p1, p2):
+def crossover(padre1, padre2):
     if random.random() <= PROB_CROSSOVER:      
-        punto = random.randint(1, len(p1)-1) # Se corta en un punto aleatorio entre 1 y 29
-        hijo1 = p1[:punto] + p2[punto:]
-        hijo2 = p2[:punto] + p1[punto:]
+        punto = random.randint(1, len(padre1)-1) # Se corta en un punto aleatorio entre 1 y 29
+        hijo1 = padre1[:punto] + padre2[punto:]
+        hijo2 = padre2[:punto] + padre1[punto:]
         return [hijo1, hijo2]
     else:
-        return [p1.copy(), p2.copy()] # Si no ocurre el crossover entonces se devuelven los mismos cromosomas
+        return [padre1.copy(), padre2.copy()] # Si no ocurre el crossover entonces se devuelven los mismos cromosomas
 
 def aplicar_operadores(poblacion):
     nueva_poblacion = []
@@ -135,7 +135,6 @@ def graficar_ciclo(historial):
         historial[-1]["min"],
         historial[-1]["promedio"]
     ]
-    
     
     bars = ax.bar(categories, valores)
     ax.bar_label(bars)
@@ -210,7 +209,6 @@ def ejecutar_ciclos(nro_ciclos):
         })
        
     return historial
-    
 
 nro_ciclos = int(input("Seleccione la cantidad de ciclos: "))
 historial = ejecutar_ciclos(nro_ciclos)
