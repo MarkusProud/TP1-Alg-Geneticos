@@ -16,13 +16,15 @@ Teniendo en cuenta los siguientes parametros:
     Método de Crossover: 1 Punto
     Método de Mutación: invertida
 """
-
+#CONSTANTES
 CANT_POBLACION = 10
 CANT_GENES = 30
 PROB_CROSSOVER = 0.75
 PROB_MUTACION = 0.05
 TORNEO_TAM = 3  # Tamaño del torneo para la selección por torneo (Opción B)
-
+RULETA = 1
+TORNEO = 2
+ELITISMO = 3
 
 #"Se inicializa la poblacion como una matriz o una lista anidada con valores aleatorios de cada gen en cada cromosoma"
 def init_poblacion(cant_cromosomas, cant_genes):
@@ -58,14 +60,20 @@ def funcion_fitness(cromosoma):
     x = binatodeci(cromosoma)
     return funcion_objetivo(x)
 
+# -- RULETA --
 #"Funcion de seleccion: ruleta. Devuelve un nuevo cromosoma"
 def ruleta(poblacion):    
     #"Se calcula el fitness de cada cromosoma y se agrega a la lista de fitness"
     fitness = []
+    
     for cromosoma in poblacion:
         fitness.append(funcion_fitness(cromosoma))
     
     sum_fitness = sum(fitness)
+    
+    # Esto es solo validacion en caso de que ocurra la improbabilidad que todo los fitness sumen 0
+    if sum_fitness == 0:
+        return random.choice(poblacion).copy()
     
     # Este es el giro random de la ruleta del rango del fitness
     r = random.uniform(0, sum_fitness)
@@ -79,20 +87,24 @@ def ruleta(poblacion):
         if r <= acumulado:
             return poblacion[i].copy()
 
-#--TORNEO--
+# -- TORNEO --
 # Elige TORNEO_TAM individuos al azar y devuelve el mejor de ese grupo
-def torneo(poblacion):  
+def torneo(poblacion):
     candidatos = []
 
+    # Selecciona individuos aleatorios de la poblacion
     for _ in range(TORNEO_TAM):
         indice = random.randint(0, len(poblacion) - 1)
         candidatos.append(poblacion[indice])
 
-    # Buscar el cromosoma con mayor fitness entre los candidatos
-    ganador = candidatos
+    # Tomamos el primer candidato como ganador inicial
+    ganador = candidatos[0]
     mejor_fitness = funcion_fitness(ganador)
+
+    # Comparamos contra el resto de candidatos
     for cromosoma in candidatos[1:]:
         fitness_actual = funcion_fitness(cromosoma)
+
         if fitness_actual > mejor_fitness:
             mejor_fitness = fitness_actual
             ganador = cromosoma
@@ -105,51 +117,39 @@ def mutacion(cromosoma):
             gen_pos = random.randint(0, len(cromosoma)-1)
             cromosoma[gen_pos] = 1 - cromosoma[gen_pos] #Se invierte el gen.
 
-# Funcion mutacion: La mutacion es una probabilidad que puede ocurrir en algun gen cualquiera del cromosoma
-def mutacion(cromosoma):
-    if random.random() < PROB_MUTACION:
-            gen_pos = random.randint(0, len(cromosoma)-1)
-            cromosoma[gen_pos] = 1 - cromosoma[gen_pos] #Se invierte el gen.
-
     return cromosoma
 
 # Funcion crossover de 1-punto, devuelve dos hijos
 def crossover(padre1, padre2):
     if random.random() <= PROB_CROSSOVER:      
-        punto = random.randint(1, len(p1)-1) # Se corta en un punto aleatorio entre 1 y 29
-        hijo1 = padre1[:corte] + padre2[corte:]    
-        hijo2 = padre2[:corte] + padre1[corte:]
+        punto = random.randint(1, len(padre1)-1) # Se corta en un punto aleatorio entre 1 y 29
+        hijo1 = padre1[:punto] + padre2[punto:]    
+        hijo2 = padre2[:punto] + padre1[punto:]
         return [hijo1, hijo2]
     else:
-        return [p1.copy(), p2.copy()] # Si no ocurre el crossover entonces se devuelven los mismos cromosomas
+        return [padre1.copy(), padre2.copy()] # Si no ocurre el crossover entonces se devuelven los mismos cromosomas
 
-def aplicar_operadores(poblacion):
+def aplicar_operadores(poblacion, metodo):
     nueva_poblacion = []
     
     for _ in range(len(poblacion)//2):
-        padre1 = ruleta(poblacion)
-        padre2 = ruleta(poblacion)
+        padre1 = []
+        padre2 = []
+        
+        if metodo == RULETA: 
+            padre1 = ruleta(poblacion)
+            padre2 = ruleta(poblacion)
+        elif metodo == TORNEO:
+            padre1 = torneo(poblacion)
+            padre2 = torneo(poblacion)
+        #TODO: FALTA ELITISMO ACA
+        
         hijos = crossover(padre1, padre2) #Devuelve una lista de dos hijos 
         hijo1 = mutacion(hijos[0])
         hijo2 = mutacion(hijos[1])
         nueva_poblacion.append(hijo1)
         nueva_poblacion.append(hijo2)
         
-    return nueva_poblacion
-
-# Versión de aplicar_operadores usando TORNEO en lugar de ruleta
-def aplicar_operadores_torneo(poblacion):
-    nueva_poblacion = []
-
-    for _ in range(len(poblacion) // 2):
-        padre1 = torneo(poblacion)
-        padre2 = torneo(poblacion)
-        hijos = crossover(padre1, padre2)
-        hijo1 = mutacion(hijos[0])
-        hijo2 = mutacion(hijos[1])
-        nueva_poblacion.append(hijo1)
-        nueva_poblacion.append(hijo2)
-
     return nueva_poblacion
 
 def calcular_stats(poblacion):
@@ -167,26 +167,77 @@ def calcular_stats(poblacion):
     }
 
 def graficar_ciclo(historial):
-    fig, ax = plt.subplots()
-    
-    ax.set_title(str(len(historial)) + " Iteraciones")
-    
-    categories = ["Maximo", "Minimo", "Promedio"]
-    
-    valores = [
-        historial[-1]["max"],
-        historial[-1]["min"],
-        historial[-1]["promedio"]
-    ]
-    
-    
-    bars = ax.bar(categories, valores)
-    ax.bar_label(bars)
-    ax.set_ylabel("Fitness")
-    ax.set_ylim(0, 1)
-    fig.show()
-        
+    generaciones = [fila["generacion"] for fila in historial]
+    maximos = [fila["max"] for fila in historial]
+    minimos = [fila["min"] for fila in historial]
+    promedios = [fila["promedio"] for fila in historial]
 
+    fig, ax = plt.subplots()
+
+    ax.set_title(f"Evolución del Fitness - {len(historial)} Generaciones")    
+    
+    ax.plot(generaciones, maximos, label="Máximo")
+    ax.plot(generaciones, promedios, label="Promedio")
+    ax.plot(generaciones, minimos, label="Mínimo")
+    
+    ax.set_xlabel("Generación")
+    ax.set_ylabel("Fitness")
+
+    ax.xaxis.set_major_locator(plt.MaxNLocator(integer=True))
+
+    ax.set_ylim(0, 1)
+    ax.legend()
+    ax.grid(True)
+    
+    plt.show()
+
+#Esta funcion devolvera un diccionario o historial de stats
+def ejecutar_ciclos(poblacion_inicial, nro_ciclos, metodo):
+    
+    if nro_ciclos <= 0:
+        return []
+    
+    historial = []
+
+    start_time = time.perf_counter()
+
+    # Usamos una copia de la poblacion inicial
+    poblacion = []
+
+    for cromosoma in poblacion_inicial:
+        poblacion.append(cromosoma.copy())
+
+    stats = calcular_stats(poblacion)   
+    end_time = time.perf_counter()
+    
+    historial.append({
+        "generacion": 1,
+        "min": stats["min"],
+        "promedio": stats["promedio"],
+        "max": stats["max"],
+        "desvio": stats["desvio"],
+        "tiempo": end_time - start_time         
+    })
+    
+    for generacion in range(nro_ciclos - 1):           
+        start_time = time.perf_counter()
+
+        poblacion = aplicar_operadores(poblacion, metodo)
+
+        stats = calcular_stats(poblacion)   
+        end_time = time.perf_counter()
+     
+        historial.append({
+            "generacion": generacion + 2,
+            "min": stats["min"],
+            "promedio": stats["promedio"],
+            "max": stats["max"],
+            "desvio": stats["desvio"],
+            "tiempo": end_time - start_time             
+        })
+       
+    return historial
+        
 def imprimir_historial(historial):
     print("\n")
     print("HISTORIAL:")
@@ -208,293 +259,41 @@ def imprimir_historial(historial):
     print("\n")
     print("RESUMEN")
     print("Tiempo Total: ", round(tiempo_total, 3),"(mseg)", "Tiempo Promedio: ", round(tiempo_total / len(historial), 3),"(mseg)")
-    print("\nGraficar Ciclo? \n 1 - Si \n 2 - No\n")
-    ingreso = int(input("Seleccione una opcion"))
-    if ingreso == 1:
-        graficar_ciclo(historial)
+ 
+#Se inicializa la primera poblacion.
+poblacion_inicial = init_poblacion(CANT_POBLACION, CANT_GENES)
+    
+# Generaciones 20, 100 y 200 con metodo RULETA
+histRuleta20 = ejecutar_ciclos(poblacion_inicial, 20, RULETA)
+histRuleta100 = ejecutar_ciclos(poblacion_inicial, 100, RULETA)
+histRuleta200 = ejecutar_ciclos(poblacion_inicial, 200, RULETA)
 
-#Esta funcion devolvera un diccionario o historial de stats
-def ejecutar_ciclos(nro_ciclos):
-    
-    if nro_ciclos <= 0: #Validacion
-        return 0
-    
-    historial = [] # Historial de que contiene las stats de cada generacion: nro_gen, minimo, maximo, promedio, desvio, tiempo ejecucion
-    
-    start_time = time.perf_counter() # "Se obtiene el tiempo de ejecucion inicial"
-    poblacion = init_poblacion(CANT_POBLACION, CANT_GENES)  #"Se inicializa la poblacion Inicial"
-    stats = calcular_stats(poblacion)   
-    end_time = time.perf_counter()
-    
-    historial.append({
-        "generacion": 1,
-        "min": stats["min"],
-        "promedio": stats["promedio"],
-        "max": stats["max"],
-        "desvio": stats["desvio"],
-        "tiempo": end_time - start_time         
-    })
-    
-    #Aca empieza la generacion pos inicializada la primera.
-    for generacion in range(nro_ciclos-1):           
-        start_time = time.perf_counter() # "Se obtiene el tiempo de ejecucion actual"
-        poblacion = aplicar_operadores(poblacion) #Para la siguiente poblacion 
-        stats = calcular_stats(poblacion)   
-        end_time = time.perf_counter()
-     
-        #Se guarda los stats de esta generacion en el historial
-        historial.append({
-            "generacion": generacion+2,
-            "min": stats["min"],
-            "promedio": stats["promedio"],
-            "max": stats["max"],
-            "desvio": stats["desvio"],
-            "tiempo": end_time - start_time             
-        })
-       
-    return historial
+# Historial Por Consola
+imprimir_historial(histRuleta20)
+imprimir_historial(histRuleta100)
+imprimir_historial(histRuleta200)
 
+# Graficas matplotlib
+graficar_ciclo(histRuleta20)
+graficar_ciclo(histRuleta100)
+graficar_ciclo(histRuleta200)
 
-def ejecutar_ciclos_torneo(nro_ciclos):
-    
-    if nro_ciclos <= 0: #Validacion
-        return 0
-    
-    historial = [] # Historial de que contiene las stats de cada generacion: nro_gen, minimo, maximo, promedio, desvio, tiempo ejecucion
-    
-    start_time = time.perf_counter() # "Se obtiene el tiempo de ejecucion inicial"
-    poblacion = init_poblacion(CANT_POBLACION, CANT_GENES)  #"Se inicializa la poblacion Inicial"
-    stats = calcular_stats(poblacion)   
-    end_time = time.perf_counter()
-    
-    historial.append({
-        "generacion": 1,
-        "min": stats["min"],
-        "promedio": stats["promedio"],
-        "max": stats["max"],
-        "desvio": stats["desvio"],
-        "tiempo": end_time - start_time         
-    })
-    
-    #Aca empieza la generacion pos inicializada la primera.
-    for generacion in range(nro_ciclos-1):           
-        start_time = time.perf_counter() # "Se obtiene el tiempo de ejecucion actual"
-        poblacion = aplicar_operadores_torneo(poblacion) #Para la siguiente poblacion 
-        stats = calcular_stats(poblacion)   
-        end_time = time.perf_counter()
-     
-        #Se guarda los stats de esta generacion en el historial
-        historial.append({
-            "generacion": generacion+2,
-            "min": stats["min"],
-            "promedio": stats["promedio"],
-            "max": stats["max"],
-            "desvio": stats["desvio"],
-            "tiempo": end_time - start_time             
-        })
-       
-    return historial
-    
+# Generaciones 20, 100 y 200 con metodo TORNEO
+histTorneo20 = ejecutar_ciclos(poblacion_inicial, 20, TORNEO)
+histTorneo100 = ejecutar_ciclos(poblacion_inicial, 100, TORNEO)
+histTorneo200 = ejecutar_ciclos(poblacion_inicial, 200, TORNEO)
 
-nro_ciclos = int(input("Seleccione la cantidad de ciclos: "))
-historial = ejecutar_ciclos(nro_ciclos)
-imprimir_historial(historial)
-historial = ejecutar_ciclos_torneo(nro_ciclos)
-imprimir_historial(historial)
+# Historial Por Consola
+imprimir_historial(histTorneo20)
+imprimir_historial(histTorneo100)
+imprimir_historial(histTorneo200)
+
+# Graficas matplotlib
+graficar_ciclo(histTorneo20)
+graficar_ciclo(histTorneo100)
+graficar_ciclo(histTorneo200)
+
 input("Press to exit...")
-
-    return cromosoma
-
-# Funcion crossover de 1-punto, devuelve dos hijos
-def crossover(p1, p2):
-    if random.random() <= PROB_CROSSOVER:      
-        punto = random.randint(1, len(p1)-1) # Se corta en un punto aleatorio entre 1 y 29
-        hijo1 = p1[:punto] + p2[punto:]
-        hijo2 = p2[:punto] + p1[punto:]
-        return [hijo1, hijo2]
-    else:
-        return [p1.copy(), p2.copy()] # Si no ocurre el crossover entonces se devuelven los mismos cromosomas
-
-def aplicar_operadores(poblacion):
-    nueva_poblacion = []
-    
-    for _ in range(len(poblacion)//2):
-        padre1 = ruleta(poblacion)
-        padre2 = ruleta(poblacion)
-        hijos = crossover(padre1, padre2) #Devuelve una lista de dos hijos 
-        hijo1 = mutacion(hijos[0])
-        hijo2 = mutacion(hijos[1])
-        nueva_poblacion.append(hijo1)
-        nueva_poblacion.append(hijo2)
-        
-    return nueva_poblacion
-
-# Versión de aplicar_operadores usando TORNEO en lugar de ruleta
-def aplicar_operadores_torneo(poblacion):
-    nueva_poblacion = []
-
-    for _ in range(len(poblacion) // 2):
-        padre1 = torneo(poblacion)
-        padre2 = torneo(poblacion)
-        hijos = crossover(padre1, padre2)
-        hijo1 = mutacion(hijos[0])
-        hijo2 = mutacion(hijos[1])
-        nueva_poblacion.append(hijo1)
-        nueva_poblacion.append(hijo2)
-
-    return nueva_poblacion
-
-def calcular_stats(poblacion):
-    fitness = []
-
-    for cromosoma in poblacion:
-        fitness.append(funcion_fitness(cromosoma))
-
-    #Se calculan las stats en forma de un diccionario
-    return {
-    "min": min(fitness),
-    "max": max(fitness),
-    "promedio": numpy.mean(fitness),
-    "desvio": numpy.std(fitness)
-    }
-
-def graficar_ciclo(historial):
-    fig, ax = plt.subplots()
-    
-    ax.set_title(str(len(historial)) + " Iteraciones")
-    
-    categories = ["Maximo", "Minimo", "Promedio"]
-    
-    valores = [
-        historial[-1]["max"],
-        historial[-1]["min"],
-        historial[-1]["promedio"]
-    ]
-    
-    
-    bars = ax.bar(categories, valores)
-    ax.bar_label(bars)
-    ax.set_ylabel("Fitness")
-    ax.set_ylim(0, 1)
-    fig.show()
-        
-
-def imprimir_historial(historial):
-    print("\n")
-    print("HISTORIAL:")
-    print("Gen | Min | Max | Promedio | Desvio | Tiempo(mseg)")
-    print("------------------------------------------------")
-    tiempo_total = 0
-    for fila in historial:
-        tiempo = fila["tiempo"]*1000
-        tiempo_total += tiempo 
-        
-        print(
-            fila["generacion"],"\t",
-            round(fila["min"], 3),"\t",
-            round(fila["max"], 3),"\t",
-            round(fila["promedio"], 3),"\t",
-            round(fila["desvio"], 3),"\t",
-            round(tiempo, 3)
-        )
-    print("\n")
-    print("RESUMEN")
-    print("Tiempo Total: ", round(tiempo_total, 3),"(mseg)", "Tiempo Promedio: ", round(tiempo_total / len(historial), 3),"(mseg)")
-    print("\nGraficar Ciclo? \n 1 - Si \n 2 - No\n")
-    ingreso = int(input("Seleccione una opcion"))
-    if ingreso == 1:
-        graficar_ciclo(historial)
-
-#Esta funcion devolvera un diccionario o historial de stats
-def ejecutar_ciclos(nro_ciclos):
-    
-    if nro_ciclos <= 0: #Validacion
-        return 0
-    
-    historial = [] # Historial de que contiene las stats de cada generacion: nro_gen, minimo, maximo, promedio, desvio, tiempo ejecucion
-    
-    start_time = time.perf_counter() # "Se obtiene el tiempo de ejecucion inicial"
-    poblacion = init_poblacion(CANT_POBLACION, CANT_GENES)  #"Se inicializa la poblacion Inicial"
-    stats = calcular_stats(poblacion)   
-    end_time = time.perf_counter()
-    
-    historial.append({
-        "generacion": 1,
-        "min": stats["min"],
-        "promedio": stats["promedio"],
-        "max": stats["max"],
-        "desvio": stats["desvio"],
-        "tiempo": end_time - start_time         
-    })
-    
-    #Aca empieza la generacion pos inicializada la primera.
-    for generacion in range(nro_ciclos-1):           
-        start_time = time.perf_counter() # "Se obtiene el tiempo de ejecucion actual"
-        poblacion = aplicar_operadores(poblacion) #Para la siguiente poblacion 
-        stats = calcular_stats(poblacion)   
-        end_time = time.perf_counter()
-     
-        #Se guarda los stats de esta generacion en el historial
-        historial.append({
-            "generacion": generacion+2,
-            "min": stats["min"],
-            "promedio": stats["promedio"],
-            "max": stats["max"],
-            "desvio": stats["desvio"],
-            "tiempo": end_time - start_time             
-        })
-       
-    return historial
-
-
-def ejecutar_ciclos_torneo(nro_ciclos):
-    
-    if nro_ciclos <= 0: #Validacion
-        return 0
-    
-    historial = [] # Historial de que contiene las stats de cada generacion: nro_gen, minimo, maximo, promedio, desvio, tiempo ejecucion
-    
-    start_time = time.perf_counter() # "Se obtiene el tiempo de ejecucion inicial"
-    poblacion = init_poblacion(CANT_POBLACION, CANT_GENES)  #"Se inicializa la poblacion Inicial"
-    stats = calcular_stats(poblacion)   
-    end_time = time.perf_counter()
-    
-    historial.append({
-        "generacion": 1,
-        "min": stats["min"],
-        "promedio": stats["promedio"],
-        "max": stats["max"],
-        "desvio": stats["desvio"],
-        "tiempo": end_time - start_time         
-    })
-    
-    #Aca empieza la generacion pos inicializada la primera.
-    for generacion in range(nro_ciclos-1):           
-        start_time = time.perf_counter() # "Se obtiene el tiempo de ejecucion actual"
-        poblacion = aplicar_operadores_torneo(poblacion) #Para la siguiente poblacion 
-        stats = calcular_stats(poblacion)   
-        end_time = time.perf_counter()
-     
-        #Se guarda los stats de esta generacion en el historial
-        historial.append({
-            "generacion": generacion+2,
-            "min": stats["min"],
-            "promedio": stats["promedio"],
-            "max": stats["max"],
-            "desvio": stats["desvio"],
-            "tiempo": end_time - start_time             
-        })
-       
-    return historial
-    
-
-nro_ciclos = int(input("Seleccione la cantidad de ciclos: "))
-historial = ejecutar_ciclos(nro_ciclos)
-imprimir_historial(historial)
-historial = ejecutar_ciclos_torneo(nro_ciclos)
-imprimir_historial(historial)
-input("Press to exit...")
-
 
 
 
