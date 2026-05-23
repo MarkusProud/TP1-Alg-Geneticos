@@ -123,24 +123,66 @@ def calcular_stats(poblacion):
     "desvio": numpy.std(fitness)
     }
 
-def graficar_ciclo(historial):
-    fig, ax = plt.subplots()
-    
-    ax.set_title(str(len(historial)) + " Iteraciones")
-    
-    categories = ["Maximo", "Minimo", "Promedio"]
-    
-    valores = [
-        historial[-1]["max"],
-        historial[-1]["min"],
-        historial[-1]["promedio"]
+def graficar_tiempo_ejecucion_promedio(historial20, historial100, historial200):
+    historiales = [
+        historial20,
+        historial100,
+        historial200
     ]
+
+    etiquetas = [
+        str(len(historial20)) + " generaciones",
+        str(len(historial100)) + " generaciones",
+        str(len(historial200)) + " generaciones"
+    ]
+
+    tiempos_promedio = []
+
+    for historial in historiales:
+        tiempo_total = 0
+
+        for fila in historial:
+            tiempo_total += fila["tiempo"] * 1000  # pasamos a milisegundos
+
+        promedio = tiempo_total / len(historial)
+        tiempos_promedio.append(promedio)
+
+    fig, ax = plt.subplots()
+
+    ax.set_title("Tiempo promedio de ejecución por generación")
+    ax.bar(etiquetas, tiempos_promedio)
+
+    ax.set_xlabel("Cantidad de generaciones")
+    ax.set_ylabel("Tiempo promedio (mseg)")
+
+    ax.grid(axis="y")
+
+    plt.show()
+
+def graficar_ciclo(historial):
+    generaciones = [fila["generacion"] for fila in historial]
+    maximos = [fila["max"] for fila in historial]
+    minimos = [fila["min"] for fila in historial]
+    promedios = [fila["promedio"] for fila in historial]
+
+    fig, ax = plt.subplots()
+
+    ax.set_title(f"Evolución del Fitness - {len(historial)} Generaciones")    
     
-    bars = ax.bar(categories, valores)
-    ax.bar_label(bars)
+    ax.plot(generaciones, maximos, label="Máximo")
+    ax.plot(generaciones, promedios, label="Promedio")
+    ax.plot(generaciones, minimos, label="Mínimo")
+    
+    ax.set_xlabel("Generación")
     ax.set_ylabel("Fitness")
+
+    ax.xaxis.set_major_locator(plt.MaxNLocator(integer=True))
+
     ax.set_ylim(0, 1)
-    fig.show()
+    ax.legend()
+    ax.grid(True)
+    
+    plt.show()
         
 
 def imprimir_historial(historial):
@@ -164,10 +206,6 @@ def imprimir_historial(historial):
     print("\n")
     print("RESUMEN")
     print("Tiempo Total: ", round(tiempo_total, 3),"(mseg)", "Tiempo Promedio: ", round(tiempo_total / len(historial), 3),"(mseg)")
-    print("\nGraficar Ciclo? \n 1 - Si \n 2 - No\n")
-    ingreso = int(input("Seleccione una opcion"))
-    if ingreso == 1:
-        graficar_ciclo(historial)
 
 #Esta funcion devolvera un diccionario o historial de stats
 def ejecutar_ciclos(nro_ciclos):
@@ -210,9 +248,23 @@ def ejecutar_ciclos(nro_ciclos):
        
     return historial
 
-nro_ciclos = int(input("Seleccione la cantidad de ciclos: "))
-historial = ejecutar_ciclos(nro_ciclos)
-imprimir_historial(historial)
+#nro_ciclos = int(input("Seleccione la cantidad de ciclos: "))
+historial20 = ejecutar_ciclos(20)
+historial100 = ejecutar_ciclos(100)
+historial200 = ejecutar_ciclos(200)
+imprimir_historial(historial20)
+imprimir_historial(historial100)
+imprimir_historial(historial200)
+
+print("\nGraficar Ciclo? \n 1 - Si \n 2 - No\n")
+ingreso = int(input("Seleccione una opcion"))
+if ingreso == 1:
+    graficar_tiempo_ejecucion_promedio(historial20, historial100, historial200)
+    graficar_ciclo(historial20)
+    graficar_ciclo(historial100)
+    graficar_ciclo(historial200)
+    
+    
 input("Press to exit...")
 
 
