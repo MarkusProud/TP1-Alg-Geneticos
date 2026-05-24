@@ -16,11 +16,15 @@ Teniendo en cuenta los siguientes parametros:
     Método de Crossover: 1 Punto
     Método de Mutación: invertida
 """
-
+#CONSTANTES
 CANT_POBLACION = 10
 CANT_GENES = 30
 PROB_CROSSOVER = 0.75
 PROB_MUTACION = 0.05
+TORNEO_TAM = 3  # Tamaño del torneo para la selección por torneo (Opción B)
+RULETA = 1
+TORNEO = 2
+ELITISMO = 3
 
 #"Se inicializa la poblacion como una matriz o una lista anidada con valores aleatorios de cada gen en cada cromosoma"
 def init_poblacion(cant_cromosomas, cant_genes):
@@ -56,10 +60,12 @@ def funcion_fitness(cromosoma):
     x = binatodeci(cromosoma)
     return funcion_objetivo(x)
 
+# -- RULETA --
 #"Funcion de seleccion: ruleta. Devuelve un nuevo cromosoma"
 def ruleta(poblacion):    
     #"Se calcula el fitness de cada cromosoma y se agrega a la lista de fitness"
     fitness = []
+    
     for cromosoma in poblacion:
         fitness.append(funcion_fitness(cromosoma))
     
@@ -183,8 +189,54 @@ def graficar_ciclo(historial):
     ax.grid(True)
     
     plt.show()
-        
 
+#Esta funcion devolvera un diccionario o historial de stats
+def ejecutar_ciclos(poblacion_inicial, nro_ciclos, metodo):
+    
+    if nro_ciclos <= 0:
+        return []
+    
+    historial = []
+
+    start_time = time.perf_counter()
+
+    # Usamos una copia de la poblacion inicial
+    poblacion = []
+
+    for cromosoma in poblacion_inicial:
+        poblacion.append(cromosoma.copy())
+
+    stats = calcular_stats(poblacion)   
+    end_time = time.perf_counter()
+    
+    historial.append({
+        "generacion": 1,
+        "min": stats["min"],
+        "promedio": stats["promedio"],
+        "max": stats["max"],
+        "desvio": stats["desvio"],
+        "tiempo": end_time - start_time         
+    })
+    
+    for generacion in range(nro_ciclos - 1):           
+        start_time = time.perf_counter()
+
+        poblacion = aplicar_operadores(poblacion, metodo)
+
+        stats = calcular_stats(poblacion)   
+        end_time = time.perf_counter()
+     
+        historial.append({
+            "generacion": generacion + 2,
+            "min": stats["min"],
+            "promedio": stats["promedio"],
+            "max": stats["max"],
+            "desvio": stats["desvio"],
+            "tiempo": end_time - start_time             
+        })
+       
+    return historial
+        
 def imprimir_historial(historial):
     print("\n")
     print("HISTORIAL:")
@@ -206,65 +258,40 @@ def imprimir_historial(historial):
     print("\n")
     print("RESUMEN")
     print("Tiempo Total: ", round(tiempo_total, 3),"(mseg)", "Tiempo Promedio: ", round(tiempo_total / len(historial), 3),"(mseg)")
+ 
+#Se inicializa la primera poblacion.
+poblacion_inicial = init_poblacion(CANT_POBLACION, CANT_GENES)
+    
+# Generaciones 20, 100 y 200 con metodo RULETA
+histRuleta20 = ejecutar_ciclos(poblacion_inicial, 20, RULETA)
+histRuleta100 = ejecutar_ciclos(poblacion_inicial, 100, RULETA)
+histRuleta200 = ejecutar_ciclos(poblacion_inicial, 200, RULETA)
 
-#Esta funcion devolvera un diccionario o historial de stats
-def ejecutar_ciclos(nro_ciclos):
-    
-    if nro_ciclos <= 0: #Validacion
-        return 0
-    
-    historial = [] # Historial de que contiene las stats de cada generacion: nro_gen, minimo, maximo, promedio, desvio, tiempo ejecucion
-    
-    start_time = time.perf_counter() # "Se obtiene el tiempo de ejecucion inicial"
-    poblacion = init_poblacion(CANT_POBLACION, CANT_GENES)  #"Se inicializa la poblacion Inicial"
-    stats = calcular_stats(poblacion)   
-    end_time = time.perf_counter()
-    
-    historial.append({
-        "generacion": 1,
-        "min": stats["min"],
-        "promedio": stats["promedio"],
-        "max": stats["max"],
-        "desvio": stats["desvio"],
-        "tiempo": end_time - start_time         
-    })
-    
-    #Aca empieza la generacion pos inicializada la primera.
-    for generacion in range(nro_ciclos-1):           
-        start_time = time.perf_counter() # "Se obtiene el tiempo de ejecucion actual"
-        poblacion = aplicar_operadores(poblacion) #Para la siguiente poblacion 
-        stats = calcular_stats(poblacion)   
-        end_time = time.perf_counter()
-     
-        #Se guarda los stats de esta generacion en el historial
-        historial.append({
-            "generacion": generacion+2,
-            "min": stats["min"],
-            "promedio": stats["promedio"],
-            "max": stats["max"],
-            "desvio": stats["desvio"],
-            "tiempo": end_time - start_time             
-        })
-       
-    return historial
+# Historial Por Consola
+imprimir_historial(histRuleta20)
+imprimir_historial(histRuleta100)
+imprimir_historial(histRuleta200)
 
-#nro_ciclos = int(input("Seleccione la cantidad de ciclos: "))
-historial20 = ejecutar_ciclos(20)
-historial100 = ejecutar_ciclos(100)
-historial200 = ejecutar_ciclos(200)
-imprimir_historial(historial20)
-imprimir_historial(historial100)
-imprimir_historial(historial200)
+# Graficas matplotlib
+graficar_ciclo(histRuleta20)
+graficar_ciclo(histRuleta100)
+graficar_ciclo(histRuleta200)
 
-print("\nGraficar Ciclo? \n 1 - Si \n 2 - No\n")
-ingreso = int(input("Seleccione una opcion"))
-if ingreso == 1:
-    graficar_tiempo_ejecucion_promedio(historial20, historial100, historial200)
-    graficar_ciclo(historial20)
-    graficar_ciclo(historial100)
-    graficar_ciclo(historial200)
-    
-    
+# Generaciones 20, 100 y 200 con metodo TORNEO
+histTorneo20 = ejecutar_ciclos(poblacion_inicial, 20, TORNEO)
+histTorneo100 = ejecutar_ciclos(poblacion_inicial, 100, TORNEO)
+histTorneo200 = ejecutar_ciclos(poblacion_inicial, 200, TORNEO)
+
+# Historial Por Consola
+imprimir_historial(histTorneo20)
+imprimir_historial(histTorneo100)
+imprimir_historial(histTorneo200)
+
+# Graficas matplotlib
+graficar_ciclo(histTorneo20)
+graficar_ciclo(histTorneo100)
+graficar_ciclo(histTorneo200)
+
 input("Press to exit...")
 
 
