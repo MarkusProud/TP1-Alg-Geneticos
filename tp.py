@@ -52,13 +52,22 @@ def binatodeci(binary):
 
 #"Devuelve el valor de la funcion de x => f(x) = (x/coef)^2"
 def funcion_objetivo(x):
-    coef = (2**30)-1;
+    coef = (2**30)-1
     return (x/coef)**2
     
 #"Devuelve el fitness en funcion del cromosoma"
 def funcion_fitness(cromosoma):
     x = binatodeci(cromosoma)
     return funcion_objetivo(x)
+
+# Evalua toda la poblacion y devuelve una lista con los fitness de cada cromosoma
+def evaluar_poblacion(poblacion):
+    fitness = []
+
+    for cromosoma in poblacion:
+        fitness.append(funcion_fitness(cromosoma))
+
+    return fitness
 
 # -- RULETA --
 #"Funcion de seleccion: ruleta. Devuelve un nuevo cromosoma"
@@ -70,6 +79,10 @@ def ruleta(poblacion):
         fitness.append(funcion_fitness(cromosoma))
     
     sum_fitness = sum(fitness)
+    
+    # Esto es solo validacion en caso de que ocurra la improbabilidad que todo los fitness sumen 0
+    if sum_fitness == 0:
+        return random.choice(poblacion).copy()
     
     # Este es el giro random de la ruleta del rango del fitness
     r = random.uniform(0, sum_fitness)
@@ -83,6 +96,60 @@ def ruleta(poblacion):
         if r <= acumulado:
             return poblacion[i].copy()
 
+# -- TORNEO --
+# Elige TORNEO_TAM individuos al azar y devuelve el mejor de ese grupo
+def torneo(poblacion):
+    candidatos = []
+
+    # Selecciona individuos aleatorios de la poblacion
+    for _ in range(TORNEO_TAM):
+        indice = random.randint(0, len(poblacion) - 1)
+        candidatos.append(poblacion[indice])
+
+    # Tomamos el primer candidato como ganador inicial
+    ganador = candidatos[0]
+    mejor_fitness = funcion_fitness(ganador)
+
+    # Comparamos contra el resto de candidatos
+    for cromosoma in candidatos[1:]:
+        fitness_actual = funcion_fitness(cromosoma)
+
+        if fitness_actual > mejor_fitness:
+            mejor_fitness = fitness_actual
+            ganador = cromosoma
+
+    return ganador.copy()
+#- ELITISMO -
+# Elige el mejor individuo de la poblacion y lo devuelve
+def elitismo(poblacion):
+    mejor_cromosoma = poblacion[0]
+    mejor_fitness = funcion_fitness(mejor_cromosoma)
+
+    for cromosoma in poblacion[1:]:
+        fitness_actual = funcion_fitness(cromosoma)
+
+        if fitness_actual > mejor_fitness:
+            mejor_fitness = fitness_actual
+            mejor_cromosoma = cromosoma
+
+    return mejor_cromosoma.copy()
+
+# Reemplaza el peor individuo de la nueva población por el elite
+def reemplazar_peor_por_elite(nueva_poblacion, elite):
+    peor_indice = 0
+    peor_fitness = funcion_fitness(nueva_poblacion[0])
+
+    # Buscar el peor individuo
+    for i in range(1, len(nueva_poblacion)):
+        fitness_actual = funcion_fitness(nueva_poblacion[i])
+
+        if fitness_actual < peor_fitness:
+            peor_fitness = fitness_actual
+            peor_indice = i
+
+    # Reemplazar por el elite
+    nueva_poblacion[peor_indice] = elite.copy()
+
 # Funcion mutacion: La mutacion es una probabilidad que puede ocurrir en algun gen cualquiera del cromosoma
 def mutacion(cromosoma):
     if random.random() < PROB_MUTACION:
@@ -95,32 +162,41 @@ def mutacion(cromosoma):
 def crossover(padre1, padre2):
     if random.random() <= PROB_CROSSOVER:      
         punto = random.randint(1, len(padre1)-1) # Se corta en un punto aleatorio entre 1 y 29
-        hijo1 = padre1[:punto] + padre2[punto:]
+        hijo1 = padre1[:punto] + padre2[punto:]    
         hijo2 = padre2[:punto] + padre1[punto:]
         return [hijo1, hijo2]
     else:
         return [padre1.copy(), padre2.copy()] # Si no ocurre el crossover entonces se devuelven los mismos cromosomas
 
-def aplicar_operadores(poblacion):
+def aplicar_operadores(poblacion, metodo):
     nueva_poblacion = []
-    
+    elite = elitismo(poblacion) #Necesitamos guardar el mejor individuo actual
+
     for _ in range(len(poblacion)//2):
-        padre1 = ruleta(poblacion)
-        padre2 = ruleta(poblacion)
+        padre1 = []
+        padre2 = []
+        
+        if metodo == RULETA or metodo == ELITISMO: #En el caso de elitismo se puede usar el metodo de ruleta para generar la poblacion
+            padre1 = ruleta(poblacion)
+            padre2 = ruleta(poblacion)
+        elif metodo == TORNEO:
+            padre1 = torneo(poblacion)
+            padre2 = torneo(poblacion)
+        
         hijos = crossover(padre1, padre2) #Devuelve una lista de dos hijos 
         hijo1 = mutacion(hijos[0])
         hijo2 = mutacion(hijos[1])
         nueva_poblacion.append(hijo1)
         nueva_poblacion.append(hijo2)
-        
+    # --- ELITISMO ---
+    if metodo == ELITISMO:
+        reemplazar_peor_por_elite(nueva_poblacion, elite)
     return nueva_poblacion
 
 def calcular_stats(poblacion):
-    fitness = []
-
-    for cromosoma in poblacion:
-        fitness.append(funcion_fitness(cromosoma))
-
+    
+    fitness = evaluar_poblacion(poblacion)
+    
     #Se calculan las stats en forma de un diccionario
     return {
     "min": min(fitness),
@@ -128,42 +204,6 @@ def calcular_stats(poblacion):
     "promedio": numpy.mean(fitness),
     "desvio": numpy.std(fitness)
     }
-
-def graficar_tiempo_ejecucion_promedio(historial20, historial100, historial200):
-    historiales = [
-        historial20,
-        historial100,
-        historial200
-    ]
-
-    etiquetas = [
-        str(len(historial20)) + " generaciones",
-        str(len(historial100)) + " generaciones",
-        str(len(historial200)) + " generaciones"
-    ]
-
-    tiempos_promedio = []
-
-    for historial in historiales:
-        tiempo_total = 0
-
-        for fila in historial:
-            tiempo_total += fila["tiempo"] * 1000  # pasamos a milisegundos
-
-        promedio = tiempo_total / len(historial)
-        tiempos_promedio.append(promedio)
-
-    fig, ax = plt.subplots()
-
-    ax.set_title("Tiempo promedio de ejecución por generación")
-    ax.bar(etiquetas, tiempos_promedio)
-
-    ax.set_xlabel("Cantidad de generaciones")
-    ax.set_ylabel("Tiempo promedio (mseg)")
-
-    ax.grid(axis="y")
-
-    plt.show()
 
 def graficar_ciclo(historial):
     generaciones = [fila["generacion"] for fila in historial]
@@ -292,12 +332,21 @@ graficar_ciclo(histTorneo20)
 graficar_ciclo(histTorneo100)
 graficar_ciclo(histTorneo200)
 
+# Generaciones 20, 100 y 200 (NO PIDE EL DE 200) con metodo ELITE
+histElitismo20 = ejecutar_ciclos(poblacion_inicial, 20, ELITISMO)
+histElitismo100 = ejecutar_ciclos(poblacion_inicial, 100, ELITISMO)
+#histElitismo200 = ejecutar_ciclos(poblacion_inicial, 200, ELITISMO)
+
+# Historial Por Consola
+imprimir_historial(histElitismo20)
+imprimir_historial(histElitismo100)
+#imprimir_historial(histElitismo200)
+
+# Graficas matplotlib
+graficar_ciclo(histElitismo20)
+graficar_ciclo(histElitismo100)
+#graficar_ciclo(histElitismo200)
+
 input("Press to exit...")
-
-
-
-
-
-
 
 
