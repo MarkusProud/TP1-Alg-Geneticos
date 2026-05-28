@@ -581,12 +581,17 @@ for generaciones in [20, 100, 200]:
     historial_torneo = ejecutar_ciclos(poblacion_inicial, generaciones, TORNEO)
     historial_elitismo = ejecutar_ciclos(poblacion_inicial, generaciones, ELITISMO)
     
+    imprimir_historial(historial_ruleta)
+    imprimir_historial(historial_torneo)
+    imprimir_historial(historial_elitismo)
+    
     historiales = {
         RULETA: historial_ruleta,
         TORNEO: historial_torneo,
         ELITISMO: historial_elitismo
     }
-
+    imprimir_tablas_min_prom_max(historiales)
+    
     tabla_comparativa = obtener_tabla_comparativa(historiales)
     graficar_tabla_comparativa(tabla_comparativa)
     
@@ -595,6 +600,7 @@ for generaciones in [20, 100, 200]:
     graficar_un_metodo(historial_elitismo, ELITISMO)
     
     graficar_tiempo_promedio(historial_ruleta, historial_torneo, historial_elitismo)
+
 
 
 
